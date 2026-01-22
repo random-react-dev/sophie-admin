@@ -1,13 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Users, AlertTriangle, RefreshCw } from "lucide-react";
+import { getUserCountsByStatus } from "@/lib/data";
 
-export default function SubscriptionsPage() {
-    // Placeholder data - will be replaced when payment provider is integrated
+export const dynamic = "force-dynamic";
+
+export default async function SubscriptionsPage() {
+    // Fetch real user counts by subscription status
+    const { trial, active, expired } = await getUserCountsByStatus();
+
     const stats = {
-        activePlans: 0,
-        trialUsers: 0,
-        failedPayments: 0,
-        refunds: 0,
+        activePlans: active,
+        trialUsers: trial,
+        failedPayments: 0, // Requires payment provider integration
+        refunds: 0, // Requires payment provider integration
     };
 
     return (
@@ -45,12 +50,12 @@ export default function SubscriptionsPage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Failed Payments</CardTitle>
+                        <CardTitle className="text-sm font-medium">Expired</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.failedPayments}</div>
-                        <p className="text-xs text-muted-foreground">Pending resolution</p>
+                        <div className="text-2xl font-bold">{expired}</div>
+                        <p className="text-xs text-muted-foreground">Expired subscriptions</p>
                     </CardContent>
                 </Card>
 
@@ -72,8 +77,8 @@ export default function SubscriptionsPage() {
                     <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">Payment Integration Required</h3>
                     <p className="text-muted-foreground text-center max-w-md mt-2">
-                        Connect a payment provider (RevenueCat, Stripe) to view subscription
-                        data, manage plans, and track revenue.
+                        Connect a payment provider (RevenueCat, Stripe) to view detailed subscription
+                        data, manage plans, track revenue, failed payments, and refunds.
                     </p>
                 </CardContent>
             </Card>

@@ -1,13 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Key, Server, Users } from "lucide-react";
+import { getAdminUsers } from "@/lib/data";
 
-export default function SystemPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SystemPage() {
+    // Fetch admin users
+    const adminUsers = await getAdminUsers();
+
     // System info - some values from environment
     const systemInfo = {
         supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "Not configured",
         environment: process.env.NODE_ENV ?? "development",
-        nextVersion: "15.x",
+        nextVersion: "15.3.3",
+        geminiModel: "gemini-2.5-flash-native-audio-preview-09-2025",
     };
 
     return (
@@ -75,32 +82,48 @@ export default function SystemPage() {
                 </Card>
             </div>
 
-            {/* Admin Access */}
+            {/* Admin Users */}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Shield className="h-5 w-5" />
-                        <CardTitle>Admin Access</CardTitle>
+                        <CardTitle>Admin Users ({adminUsers.length})</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            Admin users have full access to this dashboard and can view all user data.
-                            Admin status is controlled via the <code className="bg-muted px-1 rounded">is_admin</code> flag in user metadata.
+                            Admin users have full access to this dashboard. Status controlled via{" "}
+                            <code className="bg-muted px-1 rounded">is_admin</code> flag in user metadata.
                         </p>
-                        <div className="rounded-lg border p-4">
-                            <div className="flex items-center gap-3">
-                                <Users className="h-8 w-8 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium">Admin Users Management</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        To add admin users, update the user metadata in Supabase dashboard
-                                        or run a database query to set <code className="bg-muted px-1 rounded">is_admin = true</code>.
-                                    </p>
+
+                        {adminUsers.length === 0 ? (
+                            <div className="rounded-lg border p-4">
+                                <div className="flex items-center gap-3">
+                                    <Users className="h-8 w-8 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">No Admin Users Found</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Set <code className="bg-muted px-1 rounded">is_admin = true</code> in user metadata via Supabase dashboard.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {adminUsers.map((admin) => (
+                                    <div key={admin.id} className="flex items-center justify-between rounded-lg border p-3">
+                                        <div>
+                                            <p className="font-medium">{admin.email}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Added: {new Date(admin.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <Badge variant="default">Admin</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -114,18 +137,18 @@ export default function SystemPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
                             <span className="text-sm text-muted-foreground">Model</span>
-                            <p className="text-sm font-medium mt-1">
-                                gemini-2.5-flash-native-audio-preview
+                            <p className="text-sm font-medium mt-1 font-mono">
+                                {systemInfo.geminiModel}
                             </p>
                         </div>
                         <div>
                             <span className="text-sm text-muted-foreground">Usage Tracking</span>
-                            <Badge variant="secondary">Pending Setup</Badge>
+                            <Badge variant="secondary" className="ml-2">Pending Setup</Badge>
                         </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        API usage is tracked via the <code className="bg-muted px-1 rounded">api_usage_logs</code> table.
-                        Token counts are logged after each API call from the Edge Function.
+                        API usage tracking requires logging from the mobile app.
+                        Token counts can be logged to an <code className="bg-muted px-1 rounded">api_usage_logs</code> table.
                     </p>
                 </CardContent>
             </Card>
