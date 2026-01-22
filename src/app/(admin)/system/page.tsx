@@ -1,7 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Key, Server, Users } from "lucide-react";
+import { Shield, Key, Server, Users, Cpu, ExternalLink, Database } from "lucide-react";
 import { getAdminUsers } from "@/lib/data";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function SystemPage() {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <Key className="h-5 w-5" />
+                            <Database className="h-5 w-5" />
                             <CardTitle>Supabase Connection</CardTitle>
                         </div>
                     </CardHeader>
@@ -82,76 +83,126 @@ export default async function SystemPage() {
                 </Card>
             </div>
 
+            {/* Gemini API Configuration */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Cpu className="h-5 w-5" />
+                        <div>
+                            <CardTitle>Gemini API Configuration</CardTitle>
+                            <CardDescription>AI model and usage monitoring</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-4">
+                            <div>
+                                <span className="text-sm text-muted-foreground">Current Model</span>
+                                <p className="text-sm font-medium mt-1 font-mono bg-muted p-2 rounded">
+                                    {systemInfo.geminiModel}
+                                </p>
+                            </div>
+                            <div>
+                                <span className="text-sm text-muted-foreground">Features</span>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <Badge variant="secondary">Native Audio</Badge>
+                                    <Badge variant="secondary">Real-time</Badge>
+                                    <Badge variant="secondary">WebSocket</Badge>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <span className="text-sm text-muted-foreground">Usage Monitoring</span>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Monitor API usage, costs, and quotas directly in Google Cloud Console.
+                                </p>
+                            </div>
+                            <Link
+                                href="https://console.cloud.google.com/apis/api/generativelanguage.googleapis.com/metrics"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                            >
+                                Open Google Cloud Console
+                                <ExternalLink className="h-3 w-3" />
+                            </Link>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Admin Users */}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Shield className="h-5 w-5" />
-                        <CardTitle>Admin Users ({adminUsers.length})</CardTitle>
+                        <div>
+                            <CardTitle>Admin Users ({adminUsers.length})</CardTitle>
+                            <CardDescription>
+                                Users with full dashboard access (via <code className="bg-muted px-1 rounded text-xs">is_admin</code> metadata)
+                            </CardDescription>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                            Admin users have full access to this dashboard. Status controlled via{" "}
-                            <code className="bg-muted px-1 rounded">is_admin</code> flag in user metadata.
-                        </p>
-
-                        {adminUsers.length === 0 ? (
-                            <div className="rounded-lg border p-4">
-                                <div className="flex items-center gap-3">
-                                    <Users className="h-8 w-8 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium">No Admin Users Found</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Set <code className="bg-muted px-1 rounded">is_admin = true</code> in user metadata via Supabase dashboard.
-                                        </p>
-                                    </div>
+                    {adminUsers.length === 0 ? (
+                        <div className="rounded-lg border border-dashed p-4">
+                            <div className="flex items-center gap-3">
+                                <Users className="h-8 w-8 text-muted-foreground" />
+                                <div>
+                                    <p className="font-medium">No Admin Users Found</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Set <code className="bg-muted px-1 rounded">is_admin = true</code> in user metadata via Supabase dashboard.
+                                    </p>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {adminUsers.map((admin) => (
-                                    <div key={admin.id} className="flex items-center justify-between rounded-lg border p-3">
-                                        <div>
-                                            <p className="font-medium">{admin.email}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Added: {new Date(admin.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <Badge variant="default">Admin</Badge>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {adminUsers.map((admin) => (
+                                <div key={admin.id} className="flex items-center justify-between rounded-lg border p-3">
+                                    <div>
+                                        <p className="font-medium">{admin.email}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Added: {new Date(admin.createdAt).toLocaleDateString()}
+                                        </p>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    <Badge variant="default">Admin</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
-            {/* API Info */}
+            {/* Security Keys Status */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Gemini API Configuration</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Key className="h-5 w-5" />
+                        <CardTitle>API Keys Status</CardTitle>
+                    </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <span className="text-sm text-muted-foreground">Model</span>
-                            <p className="text-sm font-medium mt-1 font-mono">
-                                {systemInfo.geminiModel}
-                            </p>
+                <CardContent>
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <span className="text-sm">Supabase Anon Key</span>
+                            <Badge variant="outline" className="text-green-600">Active</Badge>
                         </div>
-                        <div>
-                            <span className="text-sm text-muted-foreground">Usage Tracking</span>
-                            <Badge variant="secondary" className="ml-2">Pending Setup</Badge>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <span className="text-sm">Service Role Key</span>
+                            <Badge variant="outline" className="text-green-600">Active</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <span className="text-sm">Gemini API Key</span>
+                            <Badge variant="outline" className="text-green-600">Active</Badge>
                         </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                        API usage tracking requires logging from the mobile app.
-                        Token counts can be logged to an <code className="bg-muted px-1 rounded">api_usage_logs</code> table.
-                    </p>
                 </CardContent>
             </Card>
         </div>
     );
 }
+

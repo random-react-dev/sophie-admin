@@ -92,6 +92,12 @@ export interface DashboardStats {
     totalVocabItems: number;
     trialUsers: number;
     paidUsers: number;
+    // Enhanced metrics
+    activeToday: number;            // Users signed in today
+    stickinessRatio: number;        // DAU/MAU percentage (0-100)
+    trialConversionRate: number;    // % of trials that converted (0-100)
+    retentionD7: number;            // 7-day retention % (0-100)
+    retentionD30: number;           // 30-day retention % (0-100)
 }
 
 export interface EngagementDataPoint {

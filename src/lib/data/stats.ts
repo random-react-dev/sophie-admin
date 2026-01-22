@@ -22,20 +22,33 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             totalVocabItems: 0,
             trialUsers: 0,
             paidUsers: 0,
+            activeToday: 0,
+            stickinessRatio: 0,
+            trialConversionRate: 0,
+            retentionD7: 0,
+            retentionD30: 0,
         };
     }
 
     const users = usersData.users;
     const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Calculate stats
+    // Calculate basic stats
     const totalUsers = users.length;
 
+    // Active users in last 30 days (MAU)
     const activeUsers = users.filter(user => {
         if (!user.last_sign_in_at) return false;
         return new Date(user.last_sign_in_at) >= thirtyDaysAgo;
+    }).length;
+
+    // Active users today (DAU)
+    const activeToday = users.filter(user => {
+        if (!user.last_sign_in_at) return false;
+        return new Date(user.last_sign_in_at) >= todayStart;
     }).length;
 
     const newUsersThisWeek = users.filter(user => {
@@ -58,6 +71,41 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         }
     });
 
+    // Calculate stickiness ratio (DAU/MAU * 100)
+    const stickinessRatio = activeUsers > 0
+        ? Math.round((activeToday / activeUsers) * 100)
+        : 0;
+
+    // Calculate trial-to-paid conversion rate
+    const totalTrialAndPaid = trialUsers + paidUsers;
+    const trialConversionRate = totalTrialAndPaid > 0
+        ? Math.round((paidUsers / totalTrialAndPaid) * 100)
+        : 0;
+
+    // Calculate D7 retention: % of users created 7+ days ago who were active in last 7 days
+    const usersCreatedBeforeD7 = users.filter(user =>
+        new Date(user.created_at) < sevenDaysAgo
+    );
+    const d7RetainedUsers = usersCreatedBeforeD7.filter(user => {
+        if (!user.last_sign_in_at) return false;
+        return new Date(user.last_sign_in_at) >= sevenDaysAgo;
+    });
+    const retentionD7 = usersCreatedBeforeD7.length > 0
+        ? Math.round((d7RetainedUsers.length / usersCreatedBeforeD7.length) * 100)
+        : 0;
+
+    // Calculate D30 retention: % of users created 30+ days ago who were active in last 30 days
+    const usersCreatedBeforeD30 = users.filter(user =>
+        new Date(user.created_at) < thirtyDaysAgo
+    );
+    const d30RetainedUsers = usersCreatedBeforeD30.filter(user => {
+        if (!user.last_sign_in_at) return false;
+        return new Date(user.last_sign_in_at) >= thirtyDaysAgo;
+    });
+    const retentionD30 = usersCreatedBeforeD30.length > 0
+        ? Math.round((d30RetainedUsers.length / usersCreatedBeforeD30.length) * 100)
+        : 0;
+
     // Get vocabulary count
     const { count: vocabCount } = await supabase
         .from("vocabulary")
@@ -70,6 +118,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         totalVocabItems: vocabCount ?? 0,
         trialUsers,
         paidUsers,
+        activeToday,
+        stickinessRatio,
+        trialConversionRate,
+        retentionD7,
+        retentionD30,
     };
 }
 
