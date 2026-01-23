@@ -47,7 +47,7 @@ export default async function SystemPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Environment Info */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className={cn(iconVariants({ color: "blue" }))}>
@@ -57,7 +57,7 @@ export default async function SystemPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <span className="text-sm text-muted-foreground">Environment</span>
               <Badge
                 variant={
@@ -69,7 +69,7 @@ export default async function SystemPage() {
                 {systemInfo.environment}
               </Badge>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 Next.js Version
               </span>
@@ -77,7 +77,7 @@ export default async function SystemPage() {
                 {systemInfo.nextVersion}
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <span className="text-sm text-muted-foreground">Deployment</span>
               <Badge variant="outline">Vercel</Badge>
             </div>
@@ -85,7 +85,7 @@ export default async function SystemPage() {
         </Card>
 
         {/* Supabase Info */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className={cn(iconVariants({ color: "green" }))}>
@@ -95,30 +95,35 @@ export default async function SystemPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="min-w-0">
               <span className="text-sm text-muted-foreground">Project URL</span>
-              <p className="text-sm font-mono mt-1 truncate">
+              <p
+                className="text-sm font-mono mt-1 truncate"
+                title={systemInfo.supabaseUrl}
+              >
                 {systemInfo.supabaseUrl}
               </p>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 Service Role Key
               </span>
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-green-600 shrink-0">
                 Configured
               </Badge>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
               <span className="text-sm text-muted-foreground">RLS Status</span>
-              <Badge variant="default">Enabled</Badge>
+              <Badge variant="default" className="shrink-0">
+                Enabled
+              </Badge>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Gemini API Configuration */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className={cn(iconVariants({ color: "yellow" }))}>
@@ -175,7 +180,7 @@ export default async function SystemPage() {
       </Card>
 
       {/* Admin Users */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className={cn(iconVariants({ color: "violet" }))}>
@@ -213,15 +218,17 @@ export default async function SystemPage() {
               {adminUsers.map((admin) => (
                 <div
                   key={admin.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
                 >
-                  <div>
-                    <p className="font-medium">{admin.email}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{admin.email}</p>
                     <p className="text-xs text-muted-foreground">
                       Added: {new Date(admin.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Badge variant="default">Admin</Badge>
+                  <Badge variant="default" className="shrink-0">
+                    Admin
+                  </Badge>
                 </div>
               ))}
             </div>
@@ -230,7 +237,7 @@ export default async function SystemPage() {
       </Card>
 
       {/* Security Keys Status */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className={cn(iconVariants({ color: "orange" }))}>
@@ -241,21 +248,21 @@ export default async function SystemPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg bg-muted/50">
               <span className="text-sm">Supabase Anon Key</span>
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-green-600 shrink-0">
                 Active
               </Badge>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg bg-muted/50">
               <span className="text-sm">Service Role Key</span>
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-green-600 shrink-0">
                 Active
               </Badge>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg bg-muted/50">
               <span className="text-sm">Gemini API Key</span>
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-green-600 shrink-0">
                 Active
               </Badge>
             </div>
