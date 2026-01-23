@@ -1,18 +1,30 @@
-import { StatsSkeleton, ChartSkeleton } from "@/components/dashboard/stats-skeleton";
+import {
+  HeaderSkeleton,
+  StatsRowSkeleton,
+  ApiCardSkeleton,
+  ChartSkeleton,
+} from "@/components/dashboard/stats-skeleton";
 
 export default function DashboardLoading() {
-    return (
-        <div className="space-y-6">
-            <div>
-                <div className="h-9 w-32 animate-pulse rounded bg-muted" />
-                <div className="mt-2 h-5 w-64 animate-pulse rounded bg-muted" />
-            </div>
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <HeaderSkeleton />
 
-            {/* Stats Grid Skeleton */}
-            <StatsSkeleton />
+      {/* Primary Stats - Row 1: 4 cards */}
+      <StatsRowSkeleton count={4} columns="lg:grid-cols-4" />
 
-            {/* Chart Skeleton */}
-            <ChartSkeleton />
-        </div>
-    );
+      {/* Secondary Stats - Row 2: 4 cards */}
+      <StatsRowSkeleton count={4} columns="lg:grid-cols-4" />
+
+      {/* Content Stats - Row 3: 3 cards */}
+      <StatsRowSkeleton count={3} columns="lg:grid-cols-3" />
+
+      {/* API Usage Card */}
+      <ApiCardSkeleton />
+
+      {/* Engagement Chart */}
+      <ChartSkeleton />
+    </div>
+  );
 }
