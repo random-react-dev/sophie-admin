@@ -1,17 +1,22 @@
 import { EngagementChart } from "@/components/dashboard/engagement-chart";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatCard, iconVariants } from "@/components/dashboard/stat-card";
 import { getDashboardStats, getEngagementData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   Activity,
   BookOpen,
   ExternalLink,
-  Percent,
-  TrendingUp,
-  UserCheck,
+  Gem,
+  History,
+  Magnet,
+  Timer,
   UserPlus,
   Users,
   Zap,
+  Ticket,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -35,25 +40,29 @@ export default async function DashboardPage() {
         <StatCard
           title="Active Today"
           value={stats.activeToday}
-          icon={Activity}
+          icon={Zap}
+          color="amber"
           description="Users signed in today"
         />
         <StatCard
           title="Total Users"
           value={stats.totalUsers}
           icon={Users}
+          color="blue"
           description="Registered accounts"
         />
         <StatCard
           title="Active (30d)"
           value={stats.activeUsers}
-          icon={UserCheck}
+          icon={Activity}
+          color="green"
           description="Monthly active users"
         />
         <StatCard
           title="New This Week"
           value={stats.newUsersThisWeek}
           icon={UserPlus}
+          color="violet"
           description="New sign-ups this week"
         />
       </div>
@@ -63,25 +72,29 @@ export default async function DashboardPage() {
         <StatCard
           title="Stickiness"
           value={`${stats.stickinessRatio}%`}
-          icon={Percent}
+          icon={Magnet}
+          color="pink"
           description="DAU / MAU ratio"
         />
         <StatCard
           title="Retention D7"
           value={`${stats.retentionD7}%`}
-          icon={TrendingUp}
+          icon={Timer}
+          color="indigo"
           description="7-day return rate"
         />
         <StatCard
           title="Retention D30"
           value={`${stats.retentionD30}%`}
-          icon={TrendingUp}
+          icon={History}
+          color="indigo"
           description="30-day return rate"
         />
         <StatCard
           title="Trial → Paid"
           value={`${stats.trialConversionRate}%`}
-          icon={Percent}
+          icon={ArrowRight}
+          color="rose"
           description="Conversion rate"
         />
       </div>
@@ -92,29 +105,34 @@ export default async function DashboardPage() {
           title="Vocab Items"
           value={stats.totalVocabItems}
           icon={BookOpen}
+          color="orange"
           description="Total saved vocabulary"
         />
         <StatCard
           title="Trial Users"
           value={stats.trialUsers}
-          icon={Users}
+          icon={Ticket}
+          color="cyan"
           description="On free trial"
         />
         <StatCard
           title="Paid Users"
           value={stats.paidUsers}
-          icon={Users}
+          icon={Gem}
+          color="fuchsia"
           description="Active subscriptions"
         />
       </div>
 
       {/* API Usage Card */}
-      <Card>
+      <Card className="hover:shadow-md transition-all duration-200 border-muted/60">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
             Gemini API Usage
           </CardTitle>
-          <Zap className="h-4 w-4 text-muted-foreground" />
+          <div className={cn(iconVariants({ color: "yellow" }))}>
+            <Sparkles className="h-5 w-5" />
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
