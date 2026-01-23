@@ -1,6 +1,8 @@
 import {
   HeaderSkeleton,
   TableSkeleton,
+  ToolbarSkeleton,
+  PaginationSkeleton,
 } from "@/components/dashboard/stats-skeleton";
 
 export default function UsersLoading() {
@@ -9,8 +11,16 @@ export default function UsersLoading() {
       {/* Page Header */}
       <HeaderSkeleton />
 
-      {/* Users Table */}
-      <TableSkeleton rows={10} />
+      <div className="space-y-4">
+        {/* Toolbar */}
+        <ToolbarSkeleton />
+
+        {/* Users Table */}
+        <TableSkeleton rows={10} />
+
+        {/* Pagination */}
+        <PaginationSkeleton />
+      </div>
     </div>
   );
 }

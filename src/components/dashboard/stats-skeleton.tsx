@@ -83,34 +83,99 @@ export function ChartSkeleton() {
 /**
  * Table skeleton for users page
  */
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+/**
+ * Table skeleton for users page
+ */
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        {/* Table header */}
-        <div className="border-b p-4">
-          <div className="flex items-center gap-4">
-            <div className="h-4 w-8 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-          </div>
-        </div>
-        {/* Table rows */}
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="border-b p-4 last:border-b-0">
-            <div className="flex items-center gap-4">
-              <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-              <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-              <div className="h-6 w-16 animate-pulse rounded-full bg-muted" />
-            </div>
-          </div>
+    <div className="rounded-md border overflow-x-auto bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Country</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Last Active</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <TableRow key={i}>
+              {/* User Column: Avatar + Name/Email */}
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
+                  <div className="space-y-1">
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              </TableCell>
+              {/* Country Column */}
+              <TableCell>
+                <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+              </TableCell>
+              {/* Status Column */}
+              <TableCell>
+                <div className="h-5 w-12 animate-pulse rounded-full bg-muted" />
+              </TableCell>
+              {/* Created Column */}
+              <TableCell>
+                <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+              </TableCell>
+              {/* Last Active Column */}
+              <TableCell>
+                <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+/**
+ * Toolbar skeleton for list pages
+ */
+export function ToolbarSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="h-10 w-full max-w-md animate-pulse rounded-md bg-muted" />
+      <div className="flex items-center gap-1">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-10 w-20 animate-pulse rounded-md bg-muted"
+          />
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Pagination skeleton for list pages
+ */
+export function PaginationSkeleton() {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+      <div className="flex items-center gap-2">
+        <div className="h-8 w-8 animate-pulse rounded-md bg-muted" />
+        <div className="h-8 w-8 animate-pulse rounded-md bg-muted" />
+      </div>
+    </div>
   );
 }
 

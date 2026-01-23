@@ -27,33 +27,33 @@ interface UserTableProps {
 
 type StatusFilter = "all" | "trial" | "active" | "expired";
 
-export function UserTable({
-  users,
-  page,
-  total,
-  totalPages,
-}: UserTableProps) {
+export function UserTable({ users, page, total, totalPages }: UserTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
+  const [searchInput, setSearchInput] = useState(
+    searchParams.get("search") ?? "",
+  );
 
   const currentStatus = (searchParams.get("status") as StatusFilter) ?? "all";
 
-  const updateParams = useCallback((updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === "") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      // Reset to page 1 when filters change
+      if (!updates.page) {
+        params.set("page", "1");
       }
-    });
-    // Reset to page 1 when filters change
-    if (!updates.page) {
-      params.set("page", "1");
-    }
-    router.push(`/users?${params.toString()}`);
-  }, [router, searchParams]);
+      router.push(`/users?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
 
   const handlePageChange = (newPage: number) => {
     updateParams({ page: newPage.toString() });
@@ -105,13 +105,17 @@ export function UserTable({
       return { label: "Paid", variant: "default" as const, key: "active" };
     }
     if (metadata?.subscription_status === "expired") {
-      return { label: "Expired", variant: "destructive" as const, key: "expired" };
+      return {
+        label: "Expired",
+        variant: "destructive" as const,
+        key: "expired",
+      };
     }
     return { label: "Trial", variant: "secondary" as const, key: "trial" };
   };
 
   // Client-side filtering based on URL params
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     const status = getStatus(user);
 
     // Status filter
@@ -123,7 +127,8 @@ export function UserTable({
     const searchTerm = searchParams.get("search")?.toLowerCase();
     if (searchTerm) {
       const email = user.email?.toLowerCase() ?? "";
-      const name = (user.user_metadata?.full_name as string)?.toLowerCase() ?? "";
+      const name =
+        (user.user_metadata?.full_name as string)?.toLowerCase() ?? "";
       if (!email.includes(searchTerm) && !name.includes(searchTerm)) {
         return false;
       }
@@ -146,7 +151,7 @@ export function UserTable({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full pl-9 pr-9 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full pl-9 pr-9 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring h-10"
             />
             {searchInput && (
               <button
@@ -157,28 +162,27 @@ export function UserTable({
               </button>
             )}
           </div>
-          <Button size="sm" onClick={handleSearch}>
-            Search
-          </Button>
+          <Button onClick={handleSearch}>Search</Button>
         </div>
 
         {/* Status Filter */}
         <div className="flex items-center gap-1">
-          {(["all", "trial", "active", "expired"] as StatusFilter[]).map((status) => (
-            <Button
-              key={status}
-              size="sm"
-              variant={currentStatus === status ? "default" : "outline"}
-              onClick={() => handleStatusFilter(status)}
-              className="capitalize"
-            >
-              {status === "active" ? "Paid" : status}
-            </Button>
-          ))}
+          {(["all", "trial", "active", "expired"] as StatusFilter[]).map(
+            (status) => (
+              <Button
+                key={status}
+                variant={currentStatus === status ? "default" : "outline"}
+                onClick={() => handleStatusFilter(status)}
+                className="capitalize"
+              >
+                {status === "active" ? "Paid" : status}
+              </Button>
+            ),
+          )}
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -202,10 +206,18 @@ export function UserTable({
                 return (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <Link href={`/users/${user.id}`} className="flex items-center gap-3 hover:underline">
+                      <Link
+                        href={`/users/${user.id}`}
+                        className="flex items-center gap-3 hover:underline"
+                      >
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="text-xs">
-                            {getInitials(user.user_metadata?.full_name as string | undefined, user.email ?? "")}
+                            {getInitials(
+                              user.user_metadata?.full_name as
+                                | string
+                                | undefined,
+                              user.email ?? "",
+                            )}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -238,7 +250,8 @@ export function UserTable({
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Showing {filteredUsers.length} of {total} users
-          {(currentStatus !== "all" || searchParams.get("search")) && " (filtered)"}
+          {(currentStatus !== "all" || searchParams.get("search")) &&
+            " (filtered)"}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -267,4 +280,3 @@ export function UserTable({
     </div>
   );
 }
-
