@@ -47,11 +47,18 @@ export default async function SubscriptionsPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Active Plans"
+          title="Paying Plan"
           value={active}
           icon={CreditCard}
           color="green"
           description="Paid subscriptions"
+        />
+        <StatCard
+          title="Conversion Rate"
+          value={`${conversionRate}%`}
+          icon={TrendingUp}
+          color="blue"
+          description="Trial to paid"
         />
         <StatCard
           title="Trial Users"
@@ -66,13 +73,6 @@ export default async function SubscriptionsPage() {
           icon={AlertTriangle}
           color="red"
           description="Expired subscriptions"
-        />
-        <StatCard
-          title="Conversion Rate"
-          value={`${conversionRate}%`}
-          icon={TrendingUp}
-          color="blue"
-          description="Trial to paid"
         />
       </div>
 
