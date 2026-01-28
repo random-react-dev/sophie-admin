@@ -93,22 +93,29 @@ export default async function DashboardPage() {
           description="30-day return rate"
         />
         <StatCard
-          title="Trial → Paid"
-          value={`${stats.trialConversionRate}%`}
-          icon={ArrowRight}
-          color="rose"
-          description="Conversion rate"
+          title="Vocab Items"
+          value={stats.totalVocabItems}
+          icon={BookOpen}
+          color="orange"
+          description="Total saved vocabulary"
         />
       </div>
 
       {/* Content Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Vocab Items"
-          value={stats.totalVocabItems}
-          icon={BookOpen}
-          color="orange"
-          description="Total saved vocabulary"
+          title="Paying Users"
+          value={stats.paidUsers}
+          icon={Gem}
+          color="fuchsia"
+          description="Active subscriptions"
+        />
+        <StatCard
+          title="Trial → Paid"
+          value={`${stats.trialConversionRate}%`}
+          icon={ArrowRight}
+          color="rose"
+          description="Conversion rate"
         />
         <StatCard
           title="Trial Users"
@@ -116,13 +123,6 @@ export default async function DashboardPage() {
           icon={Ticket}
           color="cyan"
           description="On free trial"
-        />
-        <StatCard
-          title="Paid Users"
-          value={stats.paidUsers}
-          icon={Gem}
-          color="fuchsia"
-          description="Active subscriptions"
         />
       </div>
 
