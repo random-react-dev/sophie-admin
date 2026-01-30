@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import type { FormSubmission } from "@/lib/database.types";
 
 export const submissionSchema = z
@@ -18,7 +18,7 @@ export type SubmissionInput = z.infer<typeof submissionSchema>;
 export async function saveSubmission(
   input: SubmissionInput
 ): Promise<FormSubmission> {
-  const supabase = await createAdminClient();
+  const supabase = createServiceRoleClient();
 
   const { form, email, ...data } = input;
 
@@ -43,7 +43,7 @@ export async function saveSubmission(
 export async function getSubmissions(
   limit: number = 50
 ): Promise<FormSubmission[]> {
-  const supabase = await createAdminClient();
+  const supabase = createServiceRoleClient();
 
   const { data, error } = await supabase
     .from("form_submissions")
