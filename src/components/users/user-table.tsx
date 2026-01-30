@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback } from "react";
-import { User } from "@supabase/supabase-js";
+import type { UserWithMetrics } from "@/lib/database.types";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 
 interface UserTableProps {
-  users: User[];
+  users: UserWithMetrics[];
   page: number;
   perPage: number;
   total: number;
@@ -26,6 +26,22 @@ interface UserTableProps {
 }
 
 type StatusFilter = "all" | "trial" | "active" | "expired";
+
+function formatDuration(seconds: number): string {
+  if (seconds === 0) return "—";
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function getConsistencyColor(consistency: number): string {
+  if (consistency >= 70) return "bg-green-100 text-green-800";
+  if (consistency >= 40) return "bg-yellow-100 text-yellow-800";
+  return "bg-red-100 text-red-800";
+}
 
 export function UserTable({ users, page, total, totalPages }: UserTableProps) {
   const router = useRouter();
@@ -46,7 +62,6 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
           params.set(key, value);
         }
       });
-      // Reset to page 1 when filters change
       if (!updates.page) {
         params.set("page", "1");
       }
@@ -78,15 +93,6 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
     updateParams({ status: status === "all" ? null : status });
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "Never";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   const getInitials = (name: string | undefined, email: string) => {
     if (name) {
       return name
@@ -99,36 +105,34 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
     return email.slice(0, 2).toUpperCase();
   };
 
-  const getStatus = (user: User) => {
-    const metadata = user.user_metadata;
-    if (metadata?.subscription_status === "active") {
+  const getStatus = (user: UserWithMetrics) => {
+    if (user.status === "active") {
       return { label: "Paid", variant: "default" as const, key: "active" };
     }
-    if (metadata?.subscription_status === "expired") {
+    if (user.status === "expired") {
       return {
         label: "Expired",
         variant: "destructive" as const,
         key: "expired",
       };
     }
-    return { label: "Trial", variant: "secondary" as const, key: "trial" };
+    const trialLabel = user.trialDaysRemaining !== null && user.trialDaysRemaining >= 0
+      ? `Trial (${user.trialDaysRemaining}d)`
+      : "Trial";
+    return { label: trialLabel, variant: "secondary" as const, key: "trial" };
   };
 
-  // Client-side filtering based on URL params
   const filteredUsers = users.filter((user) => {
     const status = getStatus(user);
 
-    // Status filter
     if (currentStatus !== "all" && status.key !== currentStatus) {
       return false;
     }
 
-    // Search filter (on email and name)
     const searchTerm = searchParams.get("search")?.toLowerCase();
     if (searchTerm) {
       const email = user.email?.toLowerCase() ?? "";
-      const name =
-        (user.user_metadata?.full_name as string)?.toLowerCase() ?? "";
+      const name = user.fullName?.toLowerCase() ?? "";
       if (!email.includes(searchTerm) && !name.includes(searchTerm)) {
         return false;
       }
@@ -189,14 +193,15 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
               <TableHead>User</TableHead>
               <TableHead>Country</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Last Active</TableHead>
+              <TableHead>Consistency</TableHead>
+              <TableHead>Avg Time</TableHead>
+              <TableHead>Profiles</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   No users found
                 </TableCell>
               </TableRow>
@@ -212,17 +217,12 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
                       >
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="text-xs">
-                            {getInitials(
-                              user.user_metadata?.full_name as
-                                | string
-                                | undefined,
-                              user.email ?? "",
-                            )}
+                            {getInitials(user.fullName, user.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">
-                            {(user.user_metadata?.full_name as string) || "—"}
+                            {user.fullName || "—"}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {user.email}
@@ -230,14 +230,19 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
                         </div>
                       </Link>
                     </TableCell>
-                    <TableCell>
-                      {(user.user_metadata?.country as string) || "—"}
-                    </TableCell>
+                    <TableCell>{user.country || "—"}</TableCell>
                     <TableCell>
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </TableCell>
-                    <TableCell>{formatDate(user.created_at)}</TableCell>
-                    <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getConsistencyColor(user.consistency)}`}
+                      >
+                        {user.consistency}%
+                      </span>
+                    </TableCell>
+                    <TableCell>{formatDuration(user.avgTimeSpent)}</TableCell>
+                    <TableCell>{user.totalProfiles}</TableCell>
                   </TableRow>
                 );
               })

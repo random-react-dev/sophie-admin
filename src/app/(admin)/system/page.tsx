@@ -14,11 +14,13 @@ import {
   ExternalLink,
   Database,
   Sparkles,
+  UserPlus,
 } from "lucide-react";
 import { getAdminUsers } from "@/lib/data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { iconVariants } from "@/components/dashboard/stat-card";
+import { CreateAdminForm } from "@/components/admin/create-admin-form";
 
 export const dynamic = "force-dynamic";
 
@@ -180,61 +182,76 @@ export default async function SystemPage() {
       </Card>
 
       {/* Admin Users */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className={cn(iconVariants({ color: "violet" }))}>
-              <Shield className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle>Admin Users ({adminUsers.length})</CardTitle>
-              <CardDescription>
-                Users with full dashboard access (via{" "}
-                <code className="bg-muted px-1 rounded text-xs">is_admin</code>{" "}
-                metadata)
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {adminUsers.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-4">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">No Admin Users Found</p>
-                  <p className="text-sm text-muted-foreground">
-                    Set{" "}
-                    <code className="bg-muted px-1 rounded">
-                      is_admin = true
-                    </code>{" "}
-                    in user metadata via Supabase dashboard.
-                  </p>
-                </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className={cn(iconVariants({ color: "violet" }))}>
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>Admin Users ({adminUsers.length})</CardTitle>
+                <CardDescription>
+                  Users with full dashboard access
+                </CardDescription>
               </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {adminUsers.map((admin) => (
-                <div
-                  key={admin.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{admin.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Added: {new Date(admin.createdAt).toLocaleDateString()}
+          </CardHeader>
+          <CardContent>
+            {adminUsers.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">No Admin Users Found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Create an admin user using the form.
                     </p>
                   </div>
-                  <Badge variant="default" className="shrink-0">
-                    Admin
-                  </Badge>
                 </div>
-              ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {adminUsers.map((admin) => (
+                  <div
+                    key={admin.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{admin.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Added: {new Date(admin.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="default" className="shrink-0">
+                      Admin
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className={cn(iconVariants({ color: "green" }))}>
+                <UserPlus className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>Create Admin User</CardTitle>
+                <CardDescription>
+                  Add a new user with admin dashboard access
+                </CardDescription>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <CreateAdminForm />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Security Keys Status */}
       <Card className="overflow-hidden">

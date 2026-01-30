@@ -1,19 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
+import { AnalyticsCharts, ApiUsageCharts } from "@/components/analytics/analytics-charts";
 import {
     getLanguageDistribution,
     getAccentPopularity,
     getOnboardingFunnel,
+    getApiUsageStats,
+    getDailyApiUsage,
+    getModelUsageBreakdown,
 } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-    // Fetch real data from Supabase
-    const [languages, accents, onboardingFunnel] = await Promise.all([
+    const [languages, accents, onboardingFunnel, apiStats, dailyUsage, modelBreakdown] = await Promise.all([
         getLanguageDistribution(),
         getAccentPopularity(),
         getOnboardingFunnel(),
+        getApiUsageStats(),
+        getDailyApiUsage(14),
+        getModelUsageBreakdown(),
     ]);
 
     // Calculate completion rate
@@ -34,7 +39,14 @@ export default async function AnalyticsPage() {
                 </p>
             </div>
 
-            {/* Charts - Client Component for Recharts */}
+            {/* API Usage Charts */}
+            <ApiUsageCharts
+                dailyUsage={dailyUsage}
+                modelBreakdown={modelBreakdown}
+                hasData={apiStats.hasData}
+            />
+
+            {/* Language/Accent Charts - Client Component for Recharts */}
             <AnalyticsCharts
                 languages={languages}
                 accents={accents}

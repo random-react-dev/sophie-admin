@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
-import type { DashboardStats, EngagementDataPoint } from "@/lib/database.types";
+import type { DashboardStats, EngagementDataPoint, UserStatsAggregate } from "@/lib/database.types";
 
 /**
  * Get dashboard statistics using real data from Supabase
@@ -176,4 +176,68 @@ export async function getEngagementData(days: number = 14): Promise<EngagementDa
     }
 
     return result;
+}
+
+/**
+ * Get aggregated user stats from user_stats table (speaking time, conversations)
+ */
+export async function getUserStatsAggregates(): Promise<UserStatsAggregate> {
+    const supabase = await createAdminClient();
+
+    const { data, error } = await supabase
+        .from("user_stats")
+        .select("total_speaking_seconds, total_conversations, user_id");
+
+    if (error || !data || data.length === 0) {
+        return {
+            totalSpeakingSeconds: 0,
+            totalConversations: 0,
+            averageSecondsPerUser: 0,
+            usersWithStats: 0,
+        };
+    }
+
+    const totalSpeakingSeconds = data.reduce(
+        (sum, row) => sum + (row.total_speaking_seconds ?? 0),
+        0
+    );
+    const totalConversations = data.reduce(
+        (sum, row) => sum + (row.total_conversations ?? 0),
+        0
+    );
+    const usersWithStats = data.length;
+    const averageSecondsPerUser = usersWithStats > 0
+        ? Math.round(totalSpeakingSeconds / usersWithStats)
+        : 0;
+
+    return {
+        totalSpeakingSeconds,
+        totalConversations,
+        averageSecondsPerUser,
+        usersWithStats,
+    };
+}
+
+/**
+ * Get form submissions count
+ */
+export async function getSubmissionsCount(): Promise<{ total: number; thisWeek: number }> {
+    const supabase = await createAdminClient();
+
+    const { count: total } = await supabase
+        .from("form_submissions")
+        .select("*", { count: "exact", head: true });
+
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const { count: thisWeek } = await supabase
+        .from("form_submissions")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", weekAgo.toISOString());
+
+    return {
+        total: total ?? 0,
+        thisWeek: thisWeek ?? 0,
+    };
 }

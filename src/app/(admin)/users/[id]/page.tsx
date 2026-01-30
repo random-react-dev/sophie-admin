@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, BookOpen, MessageSquare, Globe } from "lucide-react";
+import { ArrowLeft, BookOpen, MessageSquare, Globe, Clock, Timer } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +14,14 @@ interface UserDetailPageProps {
     params: Promise<{ id: string }>;
 }
 
+interface UserStats {
+    total_speaking_seconds: number;
+    total_conversations: number;
+}
+
 async function getUserDetails(userId: string) {
     const supabase = await createAdminClient();
 
-    // Get user from auth
     const { data: userData, error: userError } =
         await supabase.auth.admin.getUserById(userId);
 
@@ -25,23 +29,66 @@ async function getUserDetails(userId: string) {
         return null;
     }
 
-    // Get learning profiles
     const { data: profiles } = await supabase
         .from("learning_profiles")
         .select("*")
         .eq("user_id", userId);
 
-    // Get vocabulary count
     const { count: vocabCount } = await supabase
         .from("vocabulary")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId);
 
+    const { data: statsData } = await supabase
+        .from("user_stats")
+        .select("total_speaking_seconds, total_conversations")
+        .eq("user_id", userId)
+        .single();
+
     return {
         user: userData.user,
         profiles: profiles ?? [],
         vocabCount: vocabCount ?? 0,
+        stats: statsData as UserStats | null,
     };
+}
+
+function calculateTrialDaysRemaining(
+    subscriptionStatus: string | undefined,
+    trialEndsAt: string | undefined,
+    createdAt: string
+): number | null {
+    if (subscriptionStatus === "active" || subscriptionStatus === "expired") {
+        return null;
+    }
+
+    const now = new Date();
+
+    if (trialEndsAt) {
+        const endDate = new Date(trialEndsAt);
+        const daysRemaining = Math.ceil(
+            (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return Math.max(0, daysRemaining);
+    }
+
+    const created = new Date(createdAt);
+    const defaultTrialDays = 7;
+    const trialEnd = new Date(created.getTime() + defaultTrialDays * 24 * 60 * 60 * 1000);
+    const daysRemaining = Math.ceil(
+        (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return Math.max(0, daysRemaining);
+}
+
+function formatDuration(seconds: number): string {
+    if (seconds === 0) return "0s";
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
 }
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
@@ -52,9 +99,19 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         notFound();
     }
 
-    const { user, profiles, vocabCount } = data;
+    const { user, profiles, vocabCount, stats } = data;
     const metadata = user.user_metadata;
     const onboardingData = metadata?.onboarding_data;
+    const trialDaysRemaining = calculateTrialDaysRemaining(
+        metadata?.subscription_status,
+        metadata?.trial_ends_at,
+        user.created_at
+    );
+    const totalSpeakingSeconds = stats?.total_speaking_seconds ?? 0;
+    const totalConversations = stats?.total_conversations ?? 0;
+    const avgTimePerConversation = totalConversations > 0
+        ? Math.round(totalSpeakingSeconds / totalConversations)
+        : 0;
 
     const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return "—";
@@ -107,7 +164,15 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                             <p className="text-muted-foreground">{user.email}</p>
                             <div className="flex gap-2 mt-2">
                                 <Badge variant="secondary">{metadata?.country || "—"}</Badge>
-                                <Badge variant="outline">Trial</Badge>
+                                {metadata?.subscription_status === "active" ? (
+                                    <Badge variant="default">Paid</Badge>
+                                ) : metadata?.subscription_status === "expired" ? (
+                                    <Badge variant="destructive">Expired</Badge>
+                                ) : (
+                                    <Badge variant="outline">
+                                        Trial {trialDaysRemaining !== null && `(${trialDaysRemaining} days left)`}
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -131,7 +196,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             </Card>
 
             {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Language Profiles</CardTitle>
@@ -156,7 +221,25 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                         <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">—</div>
+                        <div className="text-2xl font-bold">{totalConversations}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Speaking Time</CardTitle>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatDuration(totalSpeakingSeconds)}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Avg Per Session</CardTitle>
+                        <Timer className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatDuration(avgTimePerConversation)}</div>
                     </CardContent>
                 </Card>
             </div>

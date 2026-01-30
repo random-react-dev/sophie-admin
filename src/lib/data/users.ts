@@ -5,7 +5,14 @@ import type {
     UserDetail,
     LearningProfile,
     UserMetadata,
+    UserWithMetrics,
 } from "@/lib/database.types";
+
+interface UserStatsRow {
+    user_id: string;
+    total_speaking_seconds: number;
+    total_conversations: number;
+}
 
 /**
  * Get paginated list of users
@@ -150,9 +157,140 @@ export async function getUserCountsByStatus(): Promise<{
         } else if (status === "expired") {
             expired++;
         } else {
-            trial++; // Default to trial
+            trial++;
         }
     });
 
     return { trial, active, expired };
+}
+
+/**
+ * Calculate user consistency (days active in last 30 days / 30 * 100)
+ */
+function calculateConsistency(lastSignIn: string | null, createdAt: string): number {
+    if (!lastSignIn) return 0;
+
+    const now = new Date();
+    const lastActive = new Date(lastSignIn);
+    const created = new Date(createdAt);
+
+    const daysSinceLastActive = Math.floor(
+        (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceLastActive > 30) return 0;
+
+    const accountAgeDays = Math.floor(
+        (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const relevantDays = Math.min(accountAgeDays, 30);
+
+    if (relevantDays <= 0) return 100;
+
+    const activeDaysEstimate = Math.max(1, relevantDays - daysSinceLastActive);
+    return Math.min(100, Math.round((activeDaysEstimate / relevantDays) * 100));
+}
+
+/**
+ * Calculate trial days remaining
+ */
+function calculateTrialDaysRemaining(
+    metadata: UserMetadata | undefined,
+    createdAt: string
+): number | null {
+    const status = metadata?.subscription_status;
+    if (status === "active" || status === "expired") return null;
+
+    const trialEndsAt = metadata?.trial_ends_at;
+    const now = new Date();
+
+    if (trialEndsAt) {
+        const endDate = new Date(trialEndsAt);
+        const daysRemaining = Math.ceil(
+            (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return Math.max(0, daysRemaining);
+    }
+
+    const created = new Date(createdAt);
+    const defaultTrialDays = 7;
+    const trialEnd = new Date(created.getTime() + defaultTrialDays * 24 * 60 * 60 * 1000);
+    const daysRemaining = Math.ceil(
+        (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return Math.max(0, daysRemaining);
+}
+
+/**
+ * Get users with enhanced metrics (consistency, avg time, profiles)
+ */
+export async function getUsersWithMetrics(
+    page: number = 1,
+    perPage: number = 20
+): Promise<{ users: UserWithMetrics[]; total: number }> {
+    const supabase = await createAdminClient();
+
+    const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({
+        page,
+        perPage,
+    });
+
+    if (usersError || !usersData) {
+        return { users: [], total: 0 };
+    }
+
+    const userIds = usersData.users.map(u => u.id);
+
+    const { data: statsData } = await supabase
+        .from("user_stats")
+        .select("user_id, total_speaking_seconds, total_conversations")
+        .in("user_id", userIds);
+
+    const statsMap = new Map<string, UserStatsRow>();
+    (statsData ?? []).forEach(row => {
+        statsMap.set(row.user_id, row as UserStatsRow);
+    });
+
+    const { data: profilesData } = await supabase
+        .from("learning_profiles")
+        .select("user_id")
+        .in("user_id", userIds);
+
+    const profileCountMap = new Map<string, number>();
+    (profilesData ?? []).forEach(row => {
+        const current = profileCountMap.get(row.user_id) ?? 0;
+        profileCountMap.set(row.user_id, current + 1);
+    });
+
+    const users: UserWithMetrics[] = usersData.users.map(user => {
+        const metadata = user.user_metadata as UserMetadata | undefined;
+        const status = metadata?.subscription_status ?? "unknown";
+        const stats = statsMap.get(user.id);
+        const totalProfiles = profileCountMap.get(user.id) ?? 0;
+
+        const totalSeconds = stats?.total_speaking_seconds ?? 0;
+        const totalConversations = stats?.total_conversations ?? 0;
+        const avgTimeSpent = totalConversations > 0
+            ? Math.round(totalSeconds / totalConversations)
+            : 0;
+
+        return {
+            id: user.id,
+            email: user.email ?? "",
+            fullName: metadata?.full_name,
+            country: metadata?.country,
+            status: status === "active" ? "active" : status === "expired" ? "expired" : status === "trial" ? "trial" : "unknown",
+            lastActiveAt: user.last_sign_in_at ?? undefined,
+            createdAt: user.created_at,
+            consistency: calculateConsistency(user.last_sign_in_at ?? null, user.created_at),
+            avgTimeSpent,
+            totalProfiles,
+            trialDaysRemaining: calculateTrialDaysRemaining(metadata, user.created_at),
+        };
+    });
+
+    return {
+        users,
+        total: usersData.total ?? users.length,
+    };
 }

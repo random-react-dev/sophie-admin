@@ -181,3 +181,73 @@ export interface FormSubmission {
     source: string | null;
     created_at: string;
 }
+
+// ============================================
+// API Usage Tracking Types
+// ============================================
+
+export interface ApiUsageLog {
+    id: string;
+    user_id: string;
+    input_tokens: number;
+    output_tokens: number;
+    model: string;
+    function_name: string | null;
+    cost_cents: number;
+    created_at: string;
+}
+
+export interface ApiUsageStats {
+    totalCalls: number;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    totalCostCents: number;
+    averageTokensPerUser: number;
+    hasData: boolean;
+}
+
+export interface DailyApiUsage {
+    date: string;
+    calls: number;
+    inputTokens: number;
+    outputTokens: number;
+    costCents: number;
+}
+
+export interface ModelUsageBreakdown {
+    model: string;
+    calls: number;
+    totalTokens: number;
+    costCents: number;
+}
+
+// ============================================
+// User Stats Types (from Sophie app)
+// ============================================
+
+export interface UserStatsRecord {
+    id: string;
+    user_id: string;
+    total_speaking_seconds: number;
+    total_conversations: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface UserStatsAggregate {
+    totalSpeakingSeconds: number;
+    totalConversations: number;
+    averageSecondsPerUser: number;
+    usersWithStats: number;
+}
+
+// ============================================
+// Enhanced User Types with Metrics
+// ============================================
+
+export interface UserWithMetrics extends UserListItem {
+    consistency: number;
+    avgTimeSpent: number;
+    totalProfiles: number;
+    trialDaysRemaining: number | null;
+}

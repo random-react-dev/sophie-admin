@@ -12,10 +12,12 @@ import {
     YAxis,
     Tooltip,
     Legend,
+    Line,
+    LineChart,
+    CartesianGrid,
 } from "recharts";
-import type { LanguageCount, AccentCount, OnboardingStep } from "@/lib/database.types";
+import type { LanguageCount, AccentCount, OnboardingStep, DailyApiUsage, ModelUsageBreakdown } from "@/lib/database.types";
 
-// Color palette for charts
 const COLORS = ["#8b5cf6", "#06b6d4", "#22c55e", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#14b8a6"];
 
 interface AnalyticsChartsProps {
@@ -23,6 +25,12 @@ interface AnalyticsChartsProps {
     accents: AccentCount[];
     onboardingFunnel: OnboardingStep[];
     completionRate: string;
+}
+
+interface ApiUsageChartsProps {
+    dailyUsage: DailyApiUsage[];
+    modelBreakdown: ModelUsageBreakdown[];
+    hasData: boolean;
 }
 
 export function AnalyticsCharts({
@@ -192,3 +200,113 @@ export function AnalyticsCharts({
     );
 }
 
+export function ApiUsageCharts({ dailyUsage, modelBreakdown, hasData }: ApiUsageChartsProps) {
+    if (!hasData) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>API Token Usage</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>API usage tracking is not yet enabled.</p>
+                        <p className="text-sm mt-2">Enable logging in the mobile app to see token usage analytics here.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    const modelData = modelBreakdown.map((item, index) => ({
+        name: item.model,
+        value: item.totalTokens,
+        calls: item.calls,
+        cost: item.costCents / 100,
+        color: COLORS[index % COLORS.length],
+    }));
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Daily Token Usage</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={dailyUsage} margin={{ left: 0, right: 10 }}>
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                                <YAxis tick={{ fontSize: 11 }} />
+                                <Tooltip
+                                    formatter={(value: number, name: string) => [
+                                        value.toLocaleString(),
+                                        name === "inputTokens" ? "Input Tokens" : "Output Tokens"
+                                    ]}
+                                />
+                                <Legend />
+                                <Line
+                                    type="monotone"
+                                    dataKey="inputTokens"
+                                    stroke="#8b5cf6"
+                                    strokeWidth={2}
+                                    dot={false}
+                                    name="Input Tokens"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="outputTokens"
+                                    stroke="#06b6d4"
+                                    strokeWidth={2}
+                                    dot={false}
+                                    name="Output Tokens"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Usage by Model</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {modelData.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                            No model data available yet.
+                        </p>
+                    ) : (
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={modelData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={80}
+                                        paddingAngle={2}
+                                    >
+                                        {modelData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value: number) => [
+                                            `${value.toLocaleString()} tokens`,
+                                            "Usage"
+                                        ]}
+                                    />
+                                    <Legend layout="vertical" align="right" verticalAlign="middle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

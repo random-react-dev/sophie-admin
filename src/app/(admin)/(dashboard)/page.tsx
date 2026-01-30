@@ -1,6 +1,6 @@
 import { EngagementChart } from "@/components/dashboard/engagement-chart";
 import { StatCard, iconVariants } from "@/components/dashboard/stat-card";
-import { getDashboardStats, getEngagementData } from "@/lib/data";
+import { getDashboardStats, getEngagementData, getUserStatsAggregates, getSubmissionsCount, getApiUsageStats } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -17,13 +17,31 @@ import {
   Ticket,
   ArrowRight,
   Sparkles,
+  MessageSquare,
+  Clock,
+  FileText,
 } from "lucide-react";
 
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function formatCost(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 export default async function DashboardPage() {
-  // Fetch real data from Supabase
-  const [stats, engagementData] = await Promise.all([
+  const [stats, engagementData, userStats, submissions, apiUsage] = await Promise.all([
     getDashboardStats(),
     getEngagementData(14),
+    getUserStatsAggregates(),
+    getSubmissionsCount(),
+    getApiUsageStats(),
   ]);
 
   return (
@@ -126,6 +144,38 @@ export default async function DashboardPage() {
         />
       </div>
 
+      {/* User Activity Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Conversations"
+          value={userStats.totalConversations}
+          icon={MessageSquare}
+          color="cyan"
+          description="All-time conversations"
+        />
+        <StatCard
+          title="Speaking Time"
+          value={formatDuration(userStats.totalSpeakingSeconds)}
+          icon={Clock}
+          color="green"
+          description="Total speaking practice"
+        />
+        <StatCard
+          title="Avg Per User"
+          value={formatDuration(userStats.averageSecondsPerUser)}
+          icon={Timer}
+          color="blue"
+          description="Average speaking time"
+        />
+        <StatCard
+          title="Form Submissions"
+          value={submissions.total}
+          icon={FileText}
+          color="orange"
+          description={`${submissions.thisWeek} this week`}
+        />
+      </div>
+
       {/* API Usage Card */}
       <Card className="hover:shadow-md transition-all duration-200 border-muted/60">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -137,19 +187,41 @@ export default async function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
-            API token usage is tracked via Google Cloud Console billing. Token
-            logging in the mobile app is not yet implemented.
-          </p>
-          <a
-            href="https://console.cloud.google.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-          >
-            View in Google Cloud Console
-            <ExternalLink className="h-3 w-3" />
-          </a>
+          {apiUsage.hasData ? (
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-2xl font-bold">{apiUsage.totalCalls.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">API Calls</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{apiUsage.totalInputTokens.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Input Tokens</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{apiUsage.totalOutputTokens.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Output Tokens</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{formatCost(apiUsage.totalCostCents)}</p>
+                <p className="text-sm text-muted-foreground">Estimated Cost</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground mb-3">
+                API token usage tracking is not yet enabled. Enable logging in the mobile app to see metrics here.
+              </p>
+              <a
+                href="https://console.cloud.google.com/billing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              >
+                View in Google Cloud Console
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </>
+          )}
         </CardContent>
       </Card>
 
