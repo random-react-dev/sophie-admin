@@ -17,6 +17,7 @@ import {
 import {
   BarChart3,
   CreditCard,
+  Inbox,
   LayoutDashboard,
   LogOut,
   Shield,
@@ -40,6 +41,11 @@ const menuItems = [
     title: "Subscriptions",
     url: "/subscriptions",
     icon: CreditCard,
+  },
+  {
+    title: "Submissions",
+    url: "/submissions",
+    icon: Inbox,
   },
   {
     title: "Analytics",

@@ -160,3 +160,24 @@ export interface UserDetail {
     learningProfiles: LearningProfile[];
     vocabularyCount: number;
 }
+
+// ============================================
+// Form Submissions / Leads Types
+// ============================================
+
+export interface FormSubmissionData {
+    language?: string;
+    level?: string;
+    goal?: string;
+    location?: string;
+    [key: string]: unknown;
+}
+
+export interface FormSubmission {
+    id: string;
+    form_type: string;
+    email: string;
+    data: FormSubmissionData;
+    source: string | null;
+    created_at: string;
+}
