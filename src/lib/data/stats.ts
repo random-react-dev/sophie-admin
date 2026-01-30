@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import type { DashboardStats, EngagementDataPoint, UserStatsAggregate } from "@/lib/database.types";
 
 /**
@@ -222,7 +223,7 @@ export async function getUserStatsAggregates(): Promise<UserStatsAggregate> {
  * Get form submissions count
  */
 export async function getSubmissionsCount(): Promise<{ total: number; thisWeek: number }> {
-    const supabase = await createAdminClient();
+    const supabase = createServiceRoleClient();
 
     const { count: total } = await supabase
         .from("form_submissions")
