@@ -5,10 +5,10 @@ import { saveSubmission, submissionSchema } from "@/lib/submissions";
 export const runtime = "nodejs";
 
 function getCorsHeaders(): Record<string, string> {
-  const allowedOrigin = process.env.ALLOWED_ORIGIN;
+  const allowedOrigin = process.env.ALLOWED_ORIGIN?.trim();
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin ?? "*",
+    "Access-Control-Allow-Origin": allowedOrigin || "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
