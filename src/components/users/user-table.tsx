@@ -116,9 +116,10 @@ export function UserTable({ users, page, total, totalPages }: UserTableProps) {
         key: "expired",
       };
     }
-    const trialLabel = user.trialDaysRemaining !== null && user.trialDaysRemaining >= 0
-      ? `Trial (${user.trialDaysRemaining}d)`
-      : "Trial";
+    const trialLabel =
+      user.trialDaysRemaining !== null && user.trialDaysRemaining >= 0
+        ? `Trial (${user.trialDaysRemaining}d)`
+        : "Trial";
     return { label: trialLabel, variant: "secondary" as const, key: "trial" };
   };
 
