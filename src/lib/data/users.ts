@@ -242,20 +242,62 @@ function calculateTrialDaysRemaining(
 export async function getUsersWithMetrics(
   page: number = 1,
   perPage: number = 20,
+  search?: string,
 ): Promise<{ users: UserWithMetrics[]; total: number }> {
   const supabase = await createAdminClient();
 
-  const { data: usersData, error: usersError } =
-    await supabase.auth.admin.listUsers({
-      page,
-      perPage,
+  let targetUsers = [];
+  let total = 0;
+
+  if (search) {
+    // Search Mode: Fetch all (up to 1000) to find matches across all pages
+    const { data: allUsersData, error: allUsersError } =
+      await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+
+    if (allUsersError || !allUsersData) {
+      return { users: [], total: 0 };
+    }
+
+    const searchLower = search.toLowerCase();
+    const filteredUsers = allUsersData.users.filter((user) => {
+      const email = user.email?.toLowerCase() ?? "";
+      const fullName = (
+        (user.user_metadata as UserMetadata)?.full_name ?? ""
+      ).toLowerCase();
+      return email.includes(searchLower) || fullName.includes(searchLower);
     });
 
-  if (usersError || !usersData) {
-    return { users: [], total: 0 };
+    total = filteredUsers.length;
+
+    // Manual pagination of filtered results
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    targetUsers = filteredUsers.slice(start, end);
+  } else {
+    // Standard Mode: Efficient DB pagination
+    const { data: usersData, error: usersError } =
+      await supabase.auth.admin.listUsers({
+        page,
+        perPage,
+      });
+
+    if (usersError || !usersData) {
+      return { users: [], total: 0 };
+    }
+
+    targetUsers = usersData.users;
+    total = usersData.total ?? usersData.users.length;
   }
 
-  const userIds = usersData.users.map((u) => u.id);
+  // Common: Fetch metrics for the specific users we are displaying
+  const userIds = targetUsers.map((u) => u.id);
+
+  if (userIds.length === 0) {
+    return { users: [], total };
+  }
 
   const { data: statsData } = await supabase
     .from("user_stats")
@@ -278,7 +320,7 @@ export async function getUsersWithMetrics(
     profileCountMap.set(row.user_id, current + 1);
   });
 
-  const users: UserWithMetrics[] = usersData.users.map((user) => {
+  const users: UserWithMetrics[] = targetUsers.map((user) => {
     const metadata = user.user_metadata as UserMetadata | undefined;
     const status = metadata?.subscription_status ?? "unknown";
     const stats = statsMap.get(user.id);
@@ -321,6 +363,6 @@ export async function getUsersWithMetrics(
 
   return {
     users,
-    total: usersData.total ?? users.length,
+    total,
   };
 }

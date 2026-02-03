@@ -4,15 +4,16 @@ import { getUsersWithMetrics } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 interface UsersPageProps {
-  searchParams: Promise<{ page?: string; perPage?: string }>;
+  searchParams: Promise<{ page?: string; perPage?: string; search?: string }>;
 }
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const params = await searchParams;
   const page = parseInt(params.page ?? "1", 10);
   const perPage = parseInt(params.perPage ?? "20", 10);
+  const search = params.search;
 
-  const { users, total } = await getUsersWithMetrics(page, perPage);
+  const { users, total } = await getUsersWithMetrics(page, perPage, search);
   const totalPages = Math.ceil(total / perPage);
 
   return (
